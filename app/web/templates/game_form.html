@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Eintrag bearbeiten' if entry else 'Spiel erfassen' }} · waste-my-time{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ 'Eintrag bearbeiten' if entry else 'Spiel manuell erfassen' }}</h1>
+    <p class="sub">
+      {% if entry %}{{ game.title }}{% else %}Für alles, was nicht (nur) in Steam liegt: Konsole, Epic, GOG, physisch …{% endif %}
+    </p>
+  </div>
+  <a class="btn ghost" href="/library">Zurück</a>
+</div>
+
+{% if game %}
+<div class="card" style="margin-bottom: 16px">
+  <div class="card-head">
+    <h2>{{ game.title }}</h2>
+    {% if game.review_score %}<span class="badge ok">{{ game.review_score }} % positiv</span>{% endif %}
+  </div>
+  <div class="chips">
+    {% for genre in (game.genres or [])[:5] %}<span class="chip">{{ genre }}</span>{% endfor %}
+    {% for tag in (game.tags or [])[:8] %}<span class="chip">{{ tag }}</span>{% endfor %}
+  </div>
+  {% if game.short_description %}<p class="small muted" style="margin-top: 10px">{{ game.short_description }}</p>{% endif %}
+</div>
+{% endif %}
+
+<form class="card" method="post" action="{{ '/library/' ~ entry.id ~ '/edit' if entry else '/library/new' }}">
+  <div class="form-grid">
+    {% if not entry %}
+      <div class="field full">
+        <label for="title">Titel</label>
+        <input id="title" type="text" name="title" required placeholder="z. B. Hollow Knight" value="{{ game.title if game else '' }}">
+      </div>
+      <div class="field">
+        <label for="platform">Plattform</label>
+        <select id="platform" name="platform">
+          {% for value, label in [('pc','PC'),('playstation','PlayStation'),('xbox','Xbox'),('switch','Switch'),('mobile','Mobile'),('other','Andere')] %}
+            <option value="{{ value }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    {% endif %}
+    <div class="field">
+      <label for="hours">Spielzeit in Stunden</label>
+      <input id="hours" type="text" name="hours" inputmode="decimal"
+             value="{{ '%.1f'|format((entry.minutes_played or 0) / 60) if entry else '' }}" placeholder="12,5">
+    </div>
+    <div class="field">
+      <label for="rating">Bewertung</label>
+      <select id="rating" name="rating">
+        <option value="">keine</option>
+        {% for value, label in [(5,'★★★★★'),(4,'★★★★☆'),(3,'★★★☆☆'),(2,'★★☆☆☆'),(1,'★☆☆☆☆')] %}
+          <option value="{{ value }}" {{ 'selected' if entry and entry.rating == value else '' }}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="status">Status</label>
+      <select id="status" name="status">
+        {% for value, label in [('owned','Besitz'),('playing','spielt'),('completed','abgeschlossen'),('abandoned','abgebrochen'),('wishlist','Wunschliste')] %}
+          <option value="{{ value }}" {{ 'selected' if entry and entry.status == value else '' }}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field full">
+      <label for="tags">Eigene Tags <span class="muted">(Komma-getrennt)</span></label>
+      <input id="tags" type="text" name="tags" placeholder="cozy, story, coop"
+             value="{{ entry.user_tags|join(', ') if entry else '' }}">
+      <p class="hint">Hilft der Empfehlung, auch Spiele ohne Steam-Metadaten einzuordnen.</p>
+    </div>
+    <div class="field full">
+      <label for="notes">Notizen</label>
+      <textarea id="notes" name="notes" placeholder="Was hat dir gefallen? Wo bist du hängen geblieben?">{{ entry.notes or '' if entry else '' }}</textarea>
+    </div>
+    <div class="field full">
+      <label><input type="checkbox" name="favorite" {{ 'checked' if entry and entry.favorite else '' }}> Favorit</label>
+    </div>
+  </div>
+  <div class="actions" style="margin-top: 16px">
+    <button class="btn primary" type="submit">{{ 'Speichern' if entry else 'Anlegen' }}</button>
+    <a class="btn ghost" href="/library">Abbrechen</a>
+  </div>
+</form>
+{% if entry %}
+  <form method="post" action="/library/{{ entry.id }}/delete" style="margin-top: 12px"
+        onsubmit="return confirm('Eintrag wirklich entfernen?')">
+    <button class="btn danger" type="submit">Eintrag entfernen</button>
+  </form>
+{% endif %}
+{% endblock %}

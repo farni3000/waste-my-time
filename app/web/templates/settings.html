@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Einstellungen · waste-my-time{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Einstellungen</h1>
+    <p class="sub">Keys liegen ausschließlich in <span class="mono">.env</span> – nie in der Datenbank oder im Browser.</p>
+  </div>
+</div>
+
+<div class="grid two">
+  <section class="card">
+    <h2>Steam</h2>
+    <p class="small">
+      {% if settings.steam_api_key and steam_id %}<span class="badge ok">API-Key gesetzt</span>{% else %}<span class="badge bad">API-Key oder SteamID fehlt</span>{% endif %}
+      <span class="mono tiny">…{{ settings.steam_api_key[-4:] if settings.steam_api_key else '----' }}</span>
+    </p>
+    <form method="post" action="/settings/steamid" style="margin-top: 12px">
+      <div class="form-grid">
+        <div class="field full">
+          <label for="steam_id">SteamID64 oder Vanity-Name</label>
+          <input id="steam_id" type="text" name="steam_id" value="{{ steam_id }}" placeholder="7656119… oder dein Profilname">
+          <p class="hint">Profil muss öffentlich sein und „Spieldetails“ sichtbar haben.</p>
+        </div>
+      </div>
+      <div class="actions" style="margin-top: 12px">
+        <button class="btn primary" type="submit">Speichern</button>
+      </div>
+    </form>
+    <form hx-post="/jobs/sync-steam" hx-target="#job-panel" hx-swap="outerHTML" style="margin-top: 10px">
+      <button class="btn" type="submit">Jetzt synchronisieren</button>
+    </form>
+    <div id="job-panel" style="margin-top: 14px"></div>
+  </section>
+
+  <section class="card">
+    <h2>DeepSeek</h2>
+    <p class="small">
+      {% if settings.has_llm %}<span class="badge ok">API-Key gesetzt</span>{% else %}<span class="badge bad">API-Key fehlt</span>{% endif %}
+      <span class="mono tiny">…{{ settings.deepseek_api_key[-4:] if settings.deepseek_api_key else '----' }}</span>
+    </p>
+    <p class="small muted">Modell: <span class="mono">{{ settings.deepseek_model }}</span><br>
+      Endpoint: <span class="mono">{{ settings.deepseek_base_url }}</span></p>
+    <p class="hint">
+      Ohne Key läuft die App weiter und nutzt die lokale Rangliste als Fallback. Für bessere Begründungen
+      Key in <span class="mono">.env</span> setzen und den Server neu starten.
+    </p>
+  </section>
+</div>
+
+<div class="grid two" style="margin-top: 18px">
+  <section class="card">
+    <h2>Datenbank</h2>
+    <p class="small mono">{{ db_path }}</p>
+    <p class="small muted">{{ (db_size / 1024)|round(1) }} KB · {{ cache_count }} gecachte API-Antworten</p>
+    <div class="actions" style="margin-top: 12px">
+      <form method="post" action="/settings/backup">
+        <button class="btn" type="submit">Backup erstellen</button>
+      </form>
+      <form method="post" action="/settings/clear-cache">
+        <button class="btn ghost" type="submit">API-Cache leeren</button>
+      </form>
+    </div>
+    <p class="hint">Backups landen unter <span class="mono">data/backups/</span> und sind von Git ignoriert.</p>
+  </section>
+
+  <section class="card">
+    <h2>Betrieb</h2>
+    <p class="small muted">
+      Web-App und Worker laufen getrennt. Für den vollen Funktionsumfang:
+    </p>
+    <pre class="small mono" style="white-space: pre-wrap; color: var(--muted)">./start.sh
+
+# oder einzeln
+.venv/bin/python -m app.cli serve
+.venv/bin/python -m app.worker</pre>
+    <p class="hint">Die App bindet nur an {{ settings.app_host }}:{{ settings.app_port }}. Kein Login, keine Exposition nach außen.</p>
+  </section>
+</div>
+{% endblock %}

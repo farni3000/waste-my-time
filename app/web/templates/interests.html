@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Interessen · waste-my-time{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Interessen</h1>
+    <p class="sub">Was magst du – und was auf keinen Fall? Gewichte fließen direkt ins Profil ein.</p>
+  </div>
+</div>
+
+<div class="grid two">
+  <section class="card">
+    <h2>Interesse hinzufügen</h2>
+    <form method="post" action="/interests">
+      <div class="form-grid">
+        <div class="field">
+          <label for="kind">Kategorie</label>
+          <select id="kind" name="kind">
+            <option value="genre">Genre</option>
+            <option value="theme">Thema</option>
+            <option value="mechanic">Mechanik</option>
+            <option value="mood">Stimmung</option>
+            <option value="constraint">Constraint</option>
+            <option value="note">Freitext-Notiz</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="value">Wert</label>
+          <input id="value" type="text" name="value" required placeholder="z. B. Roguelike, cozy, kein Horror">
+        </div>
+        <div class="field">
+          <label for="weight">Gewicht</label>
+          <select id="weight" name="weight">
+            <option value="3">+3 · Liebe ich</option>
+            <option value="2">+2 · sehr gerne</option>
+            <option value="1">+1 · gerne</option>
+            <option value="0" selected>0 · neutral / Constraint</option>
+            <option value="-1">−1 · eher nicht</option>
+            <option value="-2">−2 · mag ich nicht</option>
+            <option value="-3">−3 · auf keinen Fall</option>
+          </select>
+        </div>
+        <div class="field">
+          <label><input type="checkbox" name="hard_filter"> Harter Filter</label>
+          <p class="hint">Ausschließen, nicht nur abwerten.</p>
+        </div>
+        <div class="field full">
+          <label for="notes">Notiz</label>
+          <input id="notes" type="text" name="notes" placeholder="optional, z. B. „nur im Koop“">
+        </div>
+      </div>
+      <div class="actions" style="margin-top: 14px">
+        <button class="btn primary" type="submit">Hinzufügen</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>So wirkt es</h2>
+    <p class="small muted">
+      Positive Gewichte verstärken passende Tags, negative schwächen sie. Harte Filter werden beim
+      Kandidaten-Sammeln ausgeschlossen. Bei Constraints zählt vor allem der Wert, z. B.
+      „kein Horror“ oder „max. 25 h“ – das Zeitbudget kannst du zusätzlich pro Empfehlung setzen.
+    </p>
+    <div class="divider"></div>
+    <p class="small muted">
+      Freitext-Notizen gehen an DeepSeek, aber nicht als harter Filter. Formuliere sie kurz und konkret.
+    </p>
+  </section>
+</div>
+
+<section class="card" style="margin-top: 18px">
+  <h2>Deine Interessen</h2>
+  {% if items %}
+    <table class="table">
+      <thead><tr><th>Kategorie</th><th>Wert</th><th>Gewicht</th><th>Filter</th><th>Notiz</th><th></th></tr></thead>
+      <tbody>
+        {% for item in items %}
+          <tr>
+            <td><span class="badge">{{ item.kind }}</span></td>
+            <td class="title">{{ item.value }}</td>
+            <td class="mono small">{{ '%+d'|format(item.weight) }}</td>
+            <td>{% if item.hard_filter %}<span class="badge warn">hart</span>{% else %}<span class="muted small">–</span>{% endif %}</td>
+            <td class="small muted">{{ item.notes or '–' }}</td>
+            <td>
+              <form method="post" action="/interests/{{ item.id }}/delete">
+                <button class="btn small danger" type="submit">Entfernen</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="empty">Noch keine Interessen. Auch ohne geht es, aber mit wird es deutlich besser.</div>
+  {% endif %}
+</section>
+{% endblock %}

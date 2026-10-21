@@ -1,0 +1,51 @@
+{% set status = rec.status %}
+<article class="card rec-card" id="rec-{{ rec.id }}">
+  {% if game.header_image %}
+    <img class="rec-cover" src="{{ game.header_image }}" alt="" loading="lazy">
+  {% endif %}
+  <div class="rec-body">
+    <div class="rec-title">
+      <div>
+        <h3>
+          {{ rec.rank }}. {{ game.title }}
+          {% if game.steam_appid %}
+            <a class="tiny" href="https://store.steampowered.com/app/{{ game.steam_appid }}" target="_blank" rel="noopener">Steam ↗</a>
+          {% endif %}
+        </h3>
+        <div class="tiny muted">
+          {% if game.review_score %}{{ game.review_score }} % positiv{% if game.review_count %} ({{ game.review_count }} Reviews){% endif %}{% endif %}
+          {% if game.price_cents is not none %} · {{ game.price_cents|money }}{% endif %}
+          {% if game.release_date %} · {{ game.release_date }}{% endif %}
+        </div>
+      </div>
+      <span class="badge {{ 'ok' if status == 'liked' else ('bad' if status == 'dismissed' else ('blue' if status == 'played' else '')) }}">
+        {{ status_labels.get(status, status) }}
+      </span>
+    </div>
+
+    <div class="chips">
+      {% for tag in rec.match_tags[:6] %}<span class="chip hot">{{ tag }}</span>{% endfor %}
+      {% for genre in (game.genres or [])[:3] %}<span class="chip">{{ genre }}</span>{% endfor %}
+    </div>
+
+    <p class="reason">{{ rec.reason }}</p>
+
+    <div class="rec-foot">
+      <div class="score">Score {{ '%.2f'|format(rec.score) }}</div>
+      <div class="actions">
+        <form hx-post="/recommendations/{{ rec.id }}/feedback" hx-target="#rec-{{ rec.id }}" hx-swap="outerHTML">
+          <input type="hidden" name="status" value="liked">
+          <button class="btn small" type="submit">Merken</button>
+        </form>
+        <form hx-post="/recommendations/{{ rec.id }}/feedback" hx-target="#rec-{{ rec.id }}" hx-swap="outerHTML">
+          <input type="hidden" name="status" value="dismissed">
+          <button class="btn small ghost" type="submit">Verwerfen</button>
+        </form>
+        <form hx-post="/recommendations/{{ rec.id }}/feedback" hx-target="#rec-{{ rec.id }}" hx-swap="outerHTML">
+          <input type="hidden" name="status" value="played">
+          <button class="btn small primary" type="submit">Gespielt</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</article>

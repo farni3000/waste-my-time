@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}waste-my-time{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/htmx.min.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">waste<span>my</span>time</a>
+    <nav>
+      <a href="/" class="{{ 'active' if nav == '/' else '' }}">Dashboard</a>
+      <a href="/library" class="{{ 'active' if nav.startswith('/library') else '' }}">Bibliothek</a>
+      <a href="/interests" class="{{ 'active' if nav.startswith('/interests') else '' }}">Interessen</a>
+      <a href="/sources" class="{{ 'active' if nav.startswith('/sources') or nav.startswith('/mentions') else '' }}">Quellen</a>
+      <a href="/recommendations" class="{{ 'active' if nav.startswith('/recommendations') else '' }}">Empfehlungen</a>
+      <a href="/stats" class="{{ 'active' if nav.startswith('/stats') else '' }}">Statistik</a>
+      <a href="/settings" class="{{ 'active' if nav.startswith('/settings') else '' }}">Einstellungen</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    {% if request.query_params.get('msg') %}
+      <div class="flash">{{ request.query_params.get('msg') }}</div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer>lokal · SQLite · Steam + DeepSeek · keine Daten verlassen deinen Rechner außer an die APIs</footer>
+</body>
+</html>

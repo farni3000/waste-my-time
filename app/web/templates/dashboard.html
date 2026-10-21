@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · waste-my-time{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Was zocke ich als Nächstes?</h1>
+    <p class="sub">Deine Bibliothek, deine Interessen und ein paar gute Quellen – verdichtet zu Vorschlägen.</p>
+  </div>
+  <div class="actions">
+    <form hx-post="/jobs/sync-steam" hx-target="#job-panel" hx-swap="outerHTML">
+      <button class="btn" type="submit">Steam synchronisieren</button>
+    </form>
+    <form hx-post="/jobs/ingest" hx-target="#job-panel" hx-swap="outerHTML">
+      <button class="btn" type="submit">Quellen einlesen</button>
+    </form>
+    <a class="btn primary" href="/recommendations">Neue Empfehlung</a>
+  </div>
+</div>
+
+<div id="job-panel"></div>
+
+<div class="grid four" style="margin-bottom: 18px">
+  <div class="card stat"><div class="value">{{ stats.hours }}</div><div class="label">Stunden erfasst</div></div>
+  <div class="card stat"><div class="value">{{ stats.entries }}</div><div class="label">Bibliothekseinträge</div></div>
+  <div class="card stat"><div class="value">{{ stats.backlog }}</div><div class="label">Backlog (&lt; 1 h)</div></div>
+  <div class="card stat"><div class="value">{{ stats.pending }}</div><div class="label">Offene Erwähnungen</div></div>
+</div>
+
+<div class="grid two">
+  <section class="card">
+    <div class="card-head">
+      <h2>Geschmacksprofil</h2>
+      {% if active_profile %}<span class="badge ok">v{{ active_profile.version }}</span>{% endif %}
+    </div>
+    {% if active_profile %}
+      {% set summary = active_profile.summary_json %}
+      <p class="small muted">
+        {{ summary.totals.games }} Spiele · {{ summary.totals.completed }} abgeschlossen ·
+        {{ summary.totals.backlog }} im Backlog · Profil vom {{ active_profile.created_at|dt }}
+      </p>
+      {% if summary.loved_tags %}
+        <div class="chips" style="margin: 12px 0">
+          {% for item in summary.loved_tags[:10] %}<span class="chip hot">{{ item.tag }}</span>{% endfor %}
+        </div>
+      {% endif %}
+      {% if summary.disliked_tags %}
+        <p class="small muted" style="margin-bottom: 6px">Eher nicht:</p>
+        <div class="chips">
+          {% for item in summary.disliked_tags[:6] %}<span class="chip">{{ item.tag }}</span>{% endfor %}
+        </div>
+      {% endif %}
+      {% if summary.constraints %}
+        <div class="divider"></div>
+        <p class="small muted" style="margin-bottom: 6px">Harte Filter:</p>
+        <div class="chips">
+          {% for item in summary.constraints %}<span class="badge warn">{{ item.value }}</span>{% endfor %}
+        </div>
+      {% endif %}
+      <div class="actions" style="margin-top: 14px">
+        <a class="btn small ghost" href="/interests">Interessen bearbeiten</a>
+        <form hx-post="/jobs/profile" hx-target="#job-panel" hx-swap="outerHTML">
+          <button class="btn small ghost" type="submit">Profil neu berechnen</button>
+        </form>
+      </div>
+    {% else %}
+      <div class="empty">
+        Noch kein Profil. <a href="/library">Bibliothek füllen</a> oder
+        <a href="/interests">Interessen anlegen</a>.
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>Letzte Empfehlungen</h2>
+      {% if latest_run %}<a class="small" href="/recommendations?run_id={{ latest_run.id }}">Alle ansehen</a>{% endif %}
+    </div>
+    {% if latest_run %}
+      <p class="small muted">
+        {{ latest_run.created_at|dt }} · {{ 'Backlog' if latest_run.mode == 'backlog' else 'Neu kaufen' }} ·
+        {{ latest_run.model or 'unbekannt' }} · {{ cards|length }} Vorschläge
+      </p>
+      <div class="grid" style="margin-top: 12px">
+        {% for rec, game in cards[:5] %}
+          <div class="source-row" style="padding: 9px 0; border-bottom: 1px solid var(--border-soft)">
+            <div class="source-main">
+              <div class="source-name">{{ rec.rank }}. {{ game.title }}</div>
+              <div class="small muted">{{ rec.reason|truncate(110) }}</div>
+            </div>
+            <span class="badge {{ 'ok' if rec.status == 'liked' else ('bad' if rec.status == 'dismissed' else 'blue') }}">{{ rec.status }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty">Noch keine Empfehlung erzeugt. <a href="/recommendations">Jetzt starten</a>.</div>
+    {% endif %}
+  </section>
+</div>
+
+<section class="card" style="margin-top: 18px">
+  <div class="card-head">
+    <h2>Letzte Jobs</h2>
+    {% if account %}<span class="small muted">Steam: {{ account.persona_name or account.steamid64 }} · Sync {{ account.last_sync_at|ago }}</span>{% endif %}
+  </div>
+  {% if jobs %}
+    <table class="table">
+      <thead><tr><th>Job</th><th>Status</th><th>Meldung</th><th>Zeit</th></tr></thead>
+      <tbody>
+        {% for job in jobs %}
+          <tr>
+            <td class="mono small">{{ job.kind }}</td>
+            <td>
+              {% if job.status == 'done' %}<span class="badge ok">fertig</span>
+              {% elif job.status == 'failed' %}<span class="badge bad">Fehler</span>
+              {% elif job.status == 'running' %}<span class="badge blue">läuft</span>
+              {% else %}<span class="badge">wartet</span>{% endif %}
+            </td>
+            <td class="small">{{ job.error or job.message or '–' }}</td>
+            <td class="small muted">{{ job.created_at|dt }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="empty">Noch keine Jobs. Starte mit „Steam synchronisieren“.</div>
+  {% endif %}
+</section>
+{% endblock %}

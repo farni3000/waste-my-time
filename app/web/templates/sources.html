@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Quellen · waste-my-time{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Quellen</h1>
+    <p class="sub">RSS-Feeds und Bestenlisten liefern redaktionelle Signale – ergänzend zu deiner Bibliothek.</p>
+  </div>
+  <div class="actions">
+    <form hx-post="/jobs/ingest" hx-target="#job-panel" hx-swap="outerHTML">
+      <button class="btn primary" type="submit">Alle Quellen einlesen</button>
+    </form>
+    <a class="btn" href="/mentions">Offene Erwähnungen ({{ pending_by_source.values()|sum }})</a>
+  </div>
+</div>
+
+<div id="job-panel"></div>
+
+<section class="card" style="margin-bottom: 18px">
+  <h2>Quelle hinzufügen</h2>
+  <form method="post" action="/sources">
+    <div class="form-grid">
+      <div class="field">
+        <label for="name">Name</label>
+        <input id="name" type="text" name="name" required placeholder="z. B. RPS Best PC Games">
+      </div>
+      <div class="field">
+        <label for="kind">Typ</label>
+        <select id="kind" name="kind">
+          <option value="rss">RSS / Atom</option>
+          <option value="html">HTML-Bestenliste</option>
+        </select>
+      </div>
+      <div class="field full">
+        <label for="url">URL</label>
+        <input id="url" type="url" name="url" required placeholder="https://…">
+      </div>
+      <div class="field">
+        <label for="item_selector">Item-Selektor <span class="muted">(nur HTML)</span></label>
+        <input id="item_selector" type="text" name="item_selector" placeholder="article, li, .list-item">
+      </div>
+      <div class="field">
+        <label for="title_selector">Titel-Selektor <span class="muted">(optional)</span></label>
+        <input id="title_selector" type="text" name="title_selector" placeholder="h2, h3, a">
+      </div>
+      <div class="field full">
+        <label><input type="checkbox" name="ranked" checked> Einträge sind gerankt (Platz 1, 2, …)</label>
+        <p class="hint">Für HTML-Listen: erst die CSS-Selektoren prüfen, dann einlesen. Bei Fehlern bleibt die Quelle aktiv, der Fehler steht in der Tabelle.</p>
+      </div>
+    </div>
+    <div class="actions" style="margin-top: 14px">
+      <button class="btn primary" type="submit">Quelle anlegen</button>
+    </div>
+  </form>
+</section>
+
+<section class="card">
+  <div class="card-head">
+    <h2>Aktive Quellen</h2>
+    <span class="small muted">{{ items|length }} Quellen</span>
+  </div>
+  {% if items %}
+    <div class="grid">
+      {% for source in items %}
+        <div class="source-row" style="padding: 12px 0; border-bottom: 1px solid var(--border-soft)">
+          <div class="source-main">
+            <div class="source-name">
+              {{ source.name }}
+              <span class="badge">{{ source.kind }}</span>
+              {% if not source.enabled %}<span class="badge warn">pausiert</span>{% endif %}
+            </div>
+            <div class="url">{{ source.url }}</div>
+            <div class="small muted" style="margin-top: 4px">
+              {{ item_counts.get(source.id, 0) }} Einträge ·
+              {{ pending_by_source.get(source.id, 0) }} offen ·
+              zuletzt {{ source.last_fetched_at|ago }}
+            </div>
+            {% if source.last_error %}<div class="small" style="color: var(--danger)">{{ source.last_error }}</div>{% endif %}
+          </div>
+          <div class="actions">
+            <form hx-post="/jobs/ingest" hx-target="#job-panel" hx-swap="outerHTML">
+              <input type="hidden" name="source_id" value="{{ source.id }}">
+              <button class="btn small" type="submit">Einlesen</button>
+            </form>
+            <form method="post" action="/sources/{{ source.id }}/toggle">
+              <button class="btn small ghost" type="submit">{{ 'Pausieren' if source.enabled else 'Aktivieren' }}</button>
+            </form>
+            <form method="post" action="/sources/{{ source.id }}/delete" onsubmit="return confirm('Quelle entfernen?')">
+              <button class="btn small danger" type="submit">Löschen</button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty">Noch keine Quellen. Standard-Feeds werden beim ersten Start angelegt.</div>
+  {% endif %}
+</section>
+{% endblock %}

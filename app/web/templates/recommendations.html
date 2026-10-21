@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Empfehlungen · waste-my-time{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Empfehlungen</h1>
+    <p class="sub">DeepSeek bekommt nur eine vorbereitete Kandidatenliste und darf daraus wählen.</p>
+  </div>
+</div>
+
+{% if job %}
+  {% include "partials/job_panel.html" %}
+{% else %}
+  <div id="job-panel"></div>
+{% endif %}
+
+<section class="card" style="margin-bottom: 18px">
+  <h2>Neue Runde</h2>
+  <form hx-post="/recommendations/start" hx-target="#job-panel" hx-swap="outerHTML">
+    <div class="form-grid">
+      <div class="field">
+        <label for="mode">Modus</label>
+        <select id="mode" name="mode">
+          <option value="backlog">Aus meinem Backlog (besitze ich schon)</option>
+          <option value="new">Neu kaufen / etwas Neues</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="mood">Stimmung / Wunsch</label>
+        <input id="mood" type="text" name="mood" placeholder="z. B. entspannt, kurze Sessions, Story">
+      </div>
+      <div class="field">
+        <label for="max_hours">Max. Spielzeit (Stunden)</label>
+        <input id="max_hours" type="text" name="max_hours" inputmode="decimal" placeholder="optional, z. B. 20">
+      </div>
+      <div class="field">
+        <label for="max_price">Max. Preis (€, nur Neu-Kaufen)</label>
+        <input id="max_price" type="text" name="max_price" inputmode="decimal" placeholder="optional, z. B. 25">
+      </div>
+      <div class="field full">
+        <label for="exclude_tags">Tags ausschließen <span class="muted">(Komma-getrennt)</span></label>
+        <input id="exclude_tags" type="text" name="exclude_tags" placeholder="z. B. Horror, Multiplayer, Battle Royale">
+      </div>
+    </div>
+    <div class="actions" style="margin-top: 14px">
+      <button class="btn primary" type="submit">Vorschläge erzeugen</button>
+      <span class="hint">Dauert je nach Modus 10–90 Sekunden; der Worker muss laufen.</span>
+    </div>
+  </form>
+</section>
+
+{% if run %}
+  <div class="card" style="margin-bottom: 18px">
+    <div class="card-head">
+      <h2>
+        Lauf #{{ run.id }}
+        <span class="badge {{ 'ok' if run.status == 'done' else ('bad' if run.status == 'failed' else 'blue') }}">{{ run.status }}</span>
+        <span class="badge">{{ 'Backlog' if run.mode == 'backlog' else 'Neu kaufen' }}</span>
+      </h2>
+      <span class="small muted">{{ run.created_at|dt }}</span>
+    </div>
+    <div class="chips">
+      <span class="chip">Modell: {{ run.model or '–' }}</span>
+      <span class="chip">{{ run.candidate_count }} Kandidaten</span>
+      <span class="chip">{{ run.input_tokens }} + {{ run.output_tokens }} Tokens</span>
+      <span class="chip">Prompt {{ run.prompt_version }}</span>
+      {% if run.filters_json.get('mood') %}<span class="chip">Stimmung: {{ run.filters_json.get('mood') }}</span>{% endif %}
+      {% if run.filters_json.get('max_hours') %}<span class="chip">max. {{ run.filters_json.get('max_hours') }} h</span>{% endif %}
+      {% if run.filters_json.get('max_price') %}<span class="chip">max. {{ run.filters_json.get('max_price') }} €</span>{% endif %}
+    </div>
+    {% if run.error %}
+      <p class="small" style="color: var(--warn); margin-top: 10px">{{ run.error }}</p>
+    {% endif %}
+  </div>
+
+  {% if cards %}
+    <div class="grid recs">
+      {% for rec, game in cards %}
+        {% include "partials/rec_card.html" %}
+      {% endfor %}
+    </div>
+  {% elif run.status == 'done' %}
+    <div class="empty">Der Lauf ist fertig, aber es kamen keine gültigen Vorschläge zurück.</div>
+  {% endif %}
+{% else %}
+  <div class="empty">Noch kein Lauf. Starte oben eine Runde – vorher am besten Steam synchronisieren.</div>
+{% endif %}
+{% endblock %}

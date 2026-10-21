@@ -1,0 +1,27 @@
+<div id="job-panel"
+     {% if job.status in ['queued', 'running'] %}
+       hx-get="/jobs/{{ job.id }}/panel" hx-trigger="every 1s" hx-swap="outerHTML"
+     {% endif %}>
+  <div class="card" style="margin-bottom: 18px">
+    <div class="job">
+      <div class="row">
+        <strong>{{ job.kind }}</strong>
+        {% if job.status == 'done' %}<span class="badge ok">fertig</span>
+        {% elif job.status == 'failed' %}<span class="badge bad">Fehler</span>
+        {% elif job.status == 'running' %}<span class="badge blue">läuft</span>
+        {% else %}<span class="badge">wartet</span>{% endif %}
+      </div>
+      <div class="progress"><span style="width: {{ job.progress }}%"></span></div>
+      <div class="row small muted">
+        <span>{{ job.message or '…' }}</span>
+        <span>{{ job.progress }} %</span>
+      </div>
+      {% if job.error %}
+        <div class="small" style="color: var(--danger); white-space: pre-wrap">{{ job.error }}</div>
+      {% endif %}
+      {% if job.status == 'done' and job.kind == 'recommend' and (job.result_json or {}).get('run_id') %}
+        <div><a class="btn small primary" href="/recommendations?run_id={{ job.result_json.get('run_id') }}">Vorschläge ansehen</a></div>
+      {% endif %}
+    </div>
+  </div>
+</div>

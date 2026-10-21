@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Statistik · waste-my-time{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Statistik</h1>
+    <p class="sub">Was du gespielt hast – und was die Empfehlungen taugen.</p>
+  </div>
+</div>
+
+<div class="grid four" style="margin-bottom: 18px">
+  <div class="card stat"><div class="value">{{ total_hours }}</div><div class="label">Stunden gesamt</div></div>
+  <div class="card stat"><div class="value">{{ tracked_hours }}</div><div class="label">seit Tracking erfasst</div></div>
+  <div class="card stat"><div class="value">{{ count }}</div><div class="label">Bibliothekseinträge</div></div>
+  <div class="card stat"><div class="value">{{ feedback.get('liked', 0) }}</div><div class="label">gemerkte Vorschläge</div></div>
+</div>
+
+<div class="grid two">
+  <section class="card">
+    <h2>Spielzeit nach Genre</h2>
+    {% if genre_rows %}
+      <div class="bars">
+        {% for genre, hours in genre_rows %}
+          <div class="bar-row">
+            <span>{{ genre }}</span>
+            <div class="bar"><span style="width: {{ (hours / max_genre * 100)|round|int }}%"></span></div>
+            <span class="mono small">{{ hours|round(1) }} h</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty">Noch keine Daten.</div>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Spielzeit pro Monat</h2>
+    {% if months %}
+      <div class="bars">
+        {% for month, hours in months %}
+          <div class="bar-row">
+            <span>{{ month }}</span>
+            <div class="bar blue"><span style="width: {{ (hours / max_month * 100)|round|int }}%"></span></div>
+            <span class="mono small">{{ hours|round(1) }} h</span>
+          </div>
+        {% endfor %}
+      </div>
+      <p class="hint">Basiert auf den Differenzen der Steam-Snapshots. Der erste Snapshot zählt nicht als Spielzeit.</p>
+    {% else %}
+      <div class="empty">Noch keine Snapshots. Synchronisiere Steam ein paar Mal über mehrere Tage.</div>
+    {% endif %}
+  </section>
+</div>
+
+<div class="grid two" style="margin-top: 18px">
+  <section class="card">
+    <h2>Top-Spiele</h2>
+    {% if top_games %}
+      <table class="table">
+        <thead><tr><th>Spiel</th><th>Stunden</th><th>Status</th><th>Bewertung</th></tr></thead>
+        <tbody>
+          {% for game, entry in top_games %}
+            <tr>
+              <td class="title">{{ game.title }}</td>
+              <td class="mono small">{{ entry.minutes_played|hours }}</td>
+              <td><span class="badge">{{ status_labels.get(entry.status, entry.status) }}</span></td>
+              <td class="small">{{ '★' * (entry.rating or 0) }}{{ '☆' * (5 - (entry.rating or 0)) }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty">Noch keine Spiele.</div>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Empfehlungs-Feedback</h2>
+    <div class="grid two">
+      <div class="card stat"><div class="value">{{ feedback.get('new', 0) }}</div><div class="label">neu</div></div>
+      <div class="card stat"><div class="value">{{ feedback.get('liked', 0) }}</div><div class="label">gemerkt</div></div>
+      <div class="card stat"><div class="value">{{ feedback.get('played', 0) }}</div><div class="label">gespielt</div></div>
+      <div class="card stat"><div class="value">{{ feedback.get('dismissed', 0) }}</div><div class="label">verworfen</div></div>
+    </div>
+    <p class="hint" style="margin-top: 12px">
+      „Gespielt“ legt automatisch einen Bibliothekseintrag an. Feedback fließt in die nächste Profilberechnung ein.
+    </p>
+  </section>
+</div>
+{% endblock %}

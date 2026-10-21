@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Erwähnungen · waste-my-time{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Offene Erwähnungen</h1>
+    <p class="sub">Titel aus Bestenlisten, die noch keinem Spiel zugeordnet sind. Ein Klick reicht.</p>
+  </div>
+  <a class="btn ghost" href="/sources">Zu den Quellen</a>
+</div>
+
+{% if pending %}
+  <div class="grid two">
+    {% for row in pending %}
+      <article class="mention">
+        <div>
+          <div class="mention-title">{{ row.mention.raw_title }}</div>
+          <div class="small muted">
+            {{ row.source.name }} · {{ row.item.url }}
+            {% if row.mention.rank %} · Platz {{ row.mention.rank }}{% endif %}
+          </div>
+        </div>
+        {% if row.suggestions %}
+          <div>
+            <div class="tiny muted" style="margin-bottom: 5px">Vorschläge</div>
+            <div class="suggestions">
+              {% for game, score in row.suggestions %}
+                <form method="post" action="/mentions/{{ row.mention.id }}/resolve">
+                  <input type="hidden" name="action" value="existing">
+                  <input type="hidden" name="game_id" value="{{ game.id }}">
+                  <button class="btn small" type="submit">{{ game.title }} <span class="muted">{{ score|round|int }}%</span></button>
+                </form>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+        <div class="actions">
+          <form method="post" action="/mentions/{{ row.mention.id }}/resolve" class="actions" style="flex:1">
+            <input type="hidden" name="action" value="create">
+            <input type="text" name="title" value="{{ row.mention.raw_title }}" style="flex:1; min-width: 150px">
+            <button class="btn small primary" type="submit">Neu anlegen</button>
+          </form>
+          <form method="post" action="/mentions/{{ row.mention.id }}/resolve">
+            <input type="hidden" name="action" value="ignore">
+            <button class="btn small ghost" type="submit">Ignorieren</button>
+          </form>
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="empty">Keine offenen Erwähnungen. 🎉</div>
+{% endif %}
+
+<section class="card" style="margin-top: 18px">
+  <h2>Zuletzt aufgelöst</h2>
+  {% if recent %}
+    <table class="table">
+      <thead><tr><th>Titel</th><th>Quelle</th><th>Status</th><th>Zeit</th></tr></thead>
+      <tbody>
+        {% for mention, item in recent %}
+          <tr>
+            <td class="small">{{ mention.raw_title }}</td>
+            <td class="small muted">{{ item.title|truncate(60) }}</td>
+            <td><span class="badge {{ 'ok' if mention.status == 'resolved' else '' }}">{{ 'zugeordnet' if mention.status == 'resolved' else 'ignoriert' }}</span></td>
+            <td class="small muted">{{ mention.created_at|dt }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="muted small">Noch nichts aufgelöst.</p>
+  {% endif %}
+</section>
+{% endblock %}

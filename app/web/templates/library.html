@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Bibliothek · waste-my-time{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Bibliothek</h1>
+    <p class="sub">{{ total }} Einträge aus Steam und manuellen Angaben.</p>
+  </div>
+  <div class="actions">
+    <a class="btn primary" href="/library/new">Spiel manuell erfassen</a>
+    <form hx-post="/jobs/enrich" hx-target="#job-panel" hx-swap="outerHTML">
+      <button class="btn" type="submit">Metadaten nachladen</button>
+    </form>
+  </div>
+</div>
+
+<div id="job-panel"></div>
+
+<form class="filters" method="get" action="/library">
+  <div class="field">
+    <label for="q">Suche</label>
+    <input id="q" type="search" name="q" value="{{ q }}" placeholder="Titel …">
+  </div>
+  <div class="field">
+    <label for="status">Status</label>
+    <select id="status" name="status">
+      <option value="">alle</option>
+      {% for value, label in [('owned','Besitz'),('playing','spielt'),('completed','abgeschlossen'),('abandoned','abgebrochen'),('wishlist','Wunschliste')] %}
+        <option value="{{ value }}" {{ 'selected' if status == value else '' }}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="source">Quelle</label>
+    <select id="source" name="source">
+      <option value="">alle</option>
+      <option value="steam" {{ 'selected' if source == 'steam' else '' }}>Steam</option>
+      <option value="manual" {{ 'selected' if source == 'manual' else '' }}>manuell</option>
+    </select>
+  </div>
+  <button class="btn" type="submit">Filtern</button>
+  <a class="btn ghost" href="/library">Zurücksetzen</a>
+</form>
+
+{% if rows %}
+<div class="card flush">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Spiel</th><th>Plattform</th><th>Quelle</th><th>Status</th>
+        <th>Stunden</th><th>Bewertung</th><th>Zuletzt</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for entry, game in rows %}
+        <tr>
+          <td>
+            <div class="title">{{ game.title }}</div>
+            <div class="chips" style="margin-top: 4px">
+              {% for tag in (game.genres or game.tags or [])[:3] %}<span class="chip">{{ tag }}</span>{% endfor %}
+            </div>
+          </td>
+          <td class="small">{{ entry.platform }}</td>
+          <td><span class="badge {{ 'blue' if entry.source == 'steam' else '' }}">{{ entry.source }}</span></td>
+          <td><span class="badge {{ 'ok' if entry.status == 'completed' else ('warn' if entry.status == 'abandoned' else '') }}">{{ status_labels.get(entry.status, entry.status) }}</span></td>
+          <td class="mono small">{{ entry.minutes_played|hours }}</td>
+          <td class="small">
+            {% if entry.rating %}
+              <span title="{{ entry.rating }}/5">{{ '★' * entry.rating }}{{ '☆' * (5 - entry.rating) }}</span>
+            {% else %}<span class="muted">–</span>{% endif %}
+          </td>
+          <td class="small muted">{{ entry.last_played_at|ago }}</td>
+          <td><a class="btn small ghost" href="/library/{{ entry.id }}/edit">Bearbeiten</a></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+  <div class="empty">
+    Keine Einträge gefunden. <a href="/library/new">Manuell erfassen</a> oder
+    <a href="/">Steam synchronisieren</a>.
+  </div>
+{% endif %}
+{% endblock %}
