@@ -39,6 +39,9 @@ Local Python 3.12 app. Read `README.md` for features and setup.
   request handlers.
 - Recommendation output must be validated via `app.llm.schemas`; unknown IDs are
   dropped. Keep `PROMPT_VERSION` in sync with prompt changes.
+- The DeepSeek model is resolved at runtime from `GET /models` by tier
+  (`DEEPSEEK_MODEL_TIER`, `app/llm/models.py`); `DEEPSEEK_MODEL` is only a pin.
+  `reasoning_effort` is sent only if the catalog lists it for that model.
 - Schema changes require a migration. Tests use a separate `data/test.db`
   (set in `tests/conftest.py`) and `Base.metadata.create_all` is only a test/
   fallback helper.

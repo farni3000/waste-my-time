@@ -39,8 +39,14 @@
       {% if settings.has_llm %}<span class="badge ok">API-Key gesetzt</span>{% else %}<span class="badge bad">API-Key fehlt</span>{% endif %}
       <span class="mono tiny">…{{ settings.deepseek_api_key[-4:] if settings.deepseek_api_key else '----' }}</span>
     </p>
-    <p class="small muted">Modell: <span class="mono">{{ settings.deepseek_model }}</span><br>
+    <p class="small muted">Modell: <span class="mono">{{ settings.deepseek_model or 'automatisch (' ~ settings.deepseek_model_tier ~ '-Tier)' }}</span><br>
+      Effort: <span class="mono">{{ settings.llm_reasoning_effort or 'Provider-Default' }}</span> ·
+      max_tokens: <span class="mono">{{ settings.llm_max_tokens }}</span><br>
       Endpoint: <span class="mono">{{ settings.deepseek_base_url }}</span></p>
+    <p class="hint">
+      Ohne <span class="mono">DEEPSEEK_MODEL</span> wird pro Lauf das neueste Modell der gewählten Klasse
+      aus der Modellliste des Keys verwendet; das tatsächlich genutzte Modell steht in der Empfehlung.
+    </p>
     <p class="hint">
       Ohne Key läuft die App weiter und nutzt die lokale Rangliste als Fallback. Für bessere Begründungen
       Key in <span class="mono">.env</span> setzen und den Server neu starten.

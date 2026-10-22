@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from ..config import get_settings
 from ..domain.candidates import Candidate
 from ..domain.profile import TasteProfile
+from .models import effective_effort, resolve_model
 from .prompts import SYSTEM_PROMPT, USER_TEMPLATE
 from .schemas import LLMRecommendation, LLMResponse
 
@@ -54,19 +55,26 @@ def _extract_json(content: str) -> dict:
     return json.loads(text[start : end + 1])
 
 
-def _call(messages: list[dict], temperature: float) -> tuple[str, dict]:
+def _call(
+    messages: list[dict],
+    temperature: float,
+    model: str,
+    effort: str = "",
+) -> tuple[str, dict]:
     settings = get_settings()
     if not settings.deepseek_api_key:
         raise LLMError("DEEPSEEK_API_KEY fehlt in .env.")
     url = f"{settings.deepseek_base_url.rstrip('/')}/chat/completions"
     payload = {
-        "model": settings.deepseek_model,
+        "model": model,
         "messages": messages,
         "temperature": temperature,
-        "max_tokens": 2500,
+        "max_tokens": settings.llm_max_tokens,
         "stream": False,
         "response_format": {"type": "json_object"},
     }
+    if effort:
+        payload["reasoning_effort"] = effort
     try:
         response = httpx.post(
             url,
@@ -116,11 +124,13 @@ def rank_candidates(
     ]
 
     valid_ids = {candidate.game.id for candidate in candidates}
+    model = resolve_model(session)
+    effort = effective_effort(session, model)
     last_error: Exception | None = None
     content = ""
     usage: dict = {}
     for _attempt in range(2):
-        content, usage = _call(messages, settings.llm_temperature)
+        content, usage = _call(messages, settings.llm_temperature, model, effort)
         try:
             parsed = LLMResponse.model_validate(_extract_json(content))
             valid = [
@@ -141,7 +151,7 @@ def rank_candidates(
                     raw_response=content,
                     input_tokens=int(usage.get("prompt_tokens") or 0),
                     output_tokens=int(usage.get("completion_tokens") or 0),
-                    model=settings.deepseek_model,
+                    model=model,
                 )
             last_error = ValueError("Keine gültigen candidate_ids in der Antwort.")
         except Exception as exc:  # noqa: BLE001 - retry with feedback

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -14,7 +15,9 @@ class Settings(BaseSettings):
 
     deepseek_api_key: str = ""
     deepseek_base_url: str = "https://api.deepseek.com"
-    deepseek_model: str = "deepseek-chat"
+    # Leer = Modell wird zur Laufzeit aus dem Tier aufgelöst (siehe app/llm/models.py).
+    deepseek_model: str = ""
+    deepseek_model_tier: Literal["pro", "flash"] = "pro"
 
     app_host: str = "127.0.0.1"
     app_port: int = 8765
@@ -23,6 +26,8 @@ class Settings(BaseSettings):
 
     request_timeout: float = 30.0
     llm_temperature: float = 0.7
+    llm_reasoning_effort: Literal["", "low", "high", "max"] = "low"
+    llm_max_tokens: int = 4000
     llm_max_candidates: int = 30
     steam_metadata_limit: int = 80
 

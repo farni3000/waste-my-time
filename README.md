@@ -62,7 +62,10 @@ make worker  # job queue
 | `STEAM_ID` | SteamID64 or vanity name (can also be set in the UI) |
 | `DEEPSEEK_API_KEY` | DeepSeek API key |
 | `DEEPSEEK_BASE_URL` | default `https://api.deepseek.com` |
-| `DEEPSEEK_MODEL` | default `deepseek-chat` |
+| `DEEPSEEK_MODEL` | optionaler Pin, z. B. `deepseek-v4-pro`; leer = automatisch |
+| `DEEPSEEK_MODEL_TIER` | `pro` (default) oder `flash` – Klasse für die Auto-Auflösung |
+| `LLM_REASONING_EFFORT` | `low` (default), `high`, `max` oder leer = Provider-Default |
+| `LLM_MAX_TOKENS` | Antwortbudget pro Aufruf, default `4000` |
 | `APP_HOST` / `APP_PORT` | default `127.0.0.1:8765` |
 | `DB_PATH` | default `data/app.db` |
 | `TIMEZONE` | default `Europe/Berlin` |
