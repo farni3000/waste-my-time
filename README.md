@@ -45,7 +45,8 @@ cp .env.example .env
 ```
 
 Open <http://127.0.0.1:8765>. `start.sh` runs migrations, seeds the default RSS
-feeds, starts the worker and the web app. Stop with Ctrl+C.
+feeds, starts the worker and the web app and opens the browser as soon as it
+responds. Stop with Ctrl+C. Without the browser tab: `./start.sh --no-browser`.
 
 For development you can run the two processes separately:
 
