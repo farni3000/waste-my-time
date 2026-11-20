@@ -41,12 +41,12 @@ python3.12 -m venv .venv
 cp .env.example .env
 # edit .env: STEAM_API_KEY, STEAM_ID, DEEPSEEK_API_KEY
 ./.venv/bin/alembic upgrade head
-./start.sh
+./run.sh
 ```
 
-Open <http://127.0.0.1:8765>. `start.sh` runs migrations, seeds the default RSS
+Open <http://127.0.0.1:8765>. `run.sh` runs migrations, seeds the default RSS
 feeds, starts the worker and the web app and opens the browser as soon as it
-responds. Stop with Ctrl+C. Without the browser tab: `./start.sh --no-browser`.
+responds. Stop with Ctrl+C. Without the browser tab: `./run.sh --no-browser`.
 
 For development you can run the two processes separately:
 

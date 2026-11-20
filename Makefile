@@ -14,7 +14,7 @@ worker:
 	./.venv/bin/python -m app.worker
 
 dev:
-	./start.sh
+	./run.sh
 
 test:
 	./.venv/bin/pytest -q

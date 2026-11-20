@@ -8,7 +8,7 @@ Local Python 3.12 app. Read `README.md` for features and setup.
 ./.venv/bin/pytest -q          # tests (mocked HTTP)
 ./.venv/bin/ruff check .       # lint
 ./.venv/bin/alembic upgrade head
-./start.sh                     # worker + web on 127.0.0.1:8765
+./run.sh                     # worker + web on 127.0.0.1:8765
 ./.venv/bin/python -m app.cli sync-steam
 ./.venv/bin/python -m app.cli ingest
 ./.venv/bin/python -m app.cli recommend --mode backlog
